@@ -31,7 +31,7 @@ Now, we feed the concatenated sequence as input instead of padding the shorter s
 
 See [Other details of this benchmark](#Other details of this benchmark) for the input description
 
-## Requirement
+## Requirements
 * python >= 3.6
 * [cuda](https://developer.nvidia.com/cuda-downloads) >= 11.0
 * [cudnn](https://developer.nvidia.com/cudnn) >= 8.0
