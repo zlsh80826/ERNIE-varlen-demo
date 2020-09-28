@@ -301,6 +301,6 @@ int main(int argc, char **argv) {
 
     if (not FLAGS_ignore_copy) total_time -= copy_time;
 
-    std::cout << "QPS " << num_seq / total_time << std::endl;
+    std::cout << "Sents/s " << num_seq / total_time << std::endl;
     std::cerr << num_seq << ", " << total_time << std::endl;
 }

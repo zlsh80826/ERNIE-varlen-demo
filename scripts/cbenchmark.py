@@ -43,7 +43,7 @@ class Benchmarker:
             assert False, 'Prediction failed.'
         prediction = list()
         for line in ret.stdout.decode('ascii').splitlines():
-            if line.startswith('QPS'):
+            if line.startswith('Sents/s'):
                 _, qps = line.split()
             else:
                 prediction.append(int(line))
@@ -52,7 +52,7 @@ class Benchmarker:
         labels = read_label(testcase)
         metric = get_metric(self.dataset)
         ret = metric(prediction, labels)
-        stat = {'QPS': float(qps)}
+        stat = {'Sents/s': float(qps)}
         stat['metric_value'] = ret
         stat['metric'] = metric.__name__
         stat['batch_size'] = batch_size
@@ -85,7 +85,7 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-    results = pd.DataFrame(columns=['dataset', 'model', 'mode', 'seq_len', 'batch_size', 'metric', 'metric_value', 'QPS'])
+    results = pd.DataFrame(columns=['dataset', 'model', 'mode', 'seq_len', 'batch_size', 'metric', 'metric_value', 'Sents/s'])
 
     combinations = [args.dataset, args.model, args.inference, args.batch_size, args.seq_len]
 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
         benchmarker = Benchmarker(dataset, model, mode, batch_size, seq_len, args)
         print(f'Start benchmark {dataset}-{model}, {mode}, bs: {batch_size}, seq_len: {seq_len}', end='... ')
         stat = benchmarker.benchmark()
-        print(f"QPS: {stat['QPS']}")
+        print(f"Sents/s: {stat['Sents/s']}")
         results = results.append(pd.Series(stat), ignore_index=True)
         time.sleep(args.cool_down)
     results.style.hide_index()
