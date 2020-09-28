@@ -29,7 +29,7 @@ Now, we feed the concatenated sequence as input instead of padding the shorter s
 1. AAAABBCCCD
 ```
 
-See [Other details of this benchmark](#Other details of this benchmark) for the input description
+See [Other details of this benchmark](#other-details-of-this-benchmark) for the input description
 
 ## Requirements
 * python >= 3.6
@@ -39,7 +39,7 @@ See [Other details of this benchmark](#Other details of this benchmark) for the 
 
 ## Build PaddlePaddle with varlen features
 
-We are still in progress on merging the varlen features into PaddlePaddle develop branch. We show the demo by [this branch](https://github.com/zlsh80826/Paddle.git). 
+We are still in progress on merging the varlen features into PaddlePaddle develop branch. We show the demo by [this branch](https://github.com/zlsh80826/Paddle/tree/nvinfer_plugin_var_len_cuda11). 
 
 Follow the below instructions to build the paddle inference api.
 
