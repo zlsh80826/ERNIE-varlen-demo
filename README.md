@@ -97,7 +97,7 @@ $ make
 
 ## Run the benchmark
 
-Edit run.sh, and append the TensorRT, cudnn library path into the `LD_LIBRARY_PATH`. See run.sh for details
+Edit [run.sh](https://gitlab-master.nvidia.com/rewang/ernie-varlen/-/blob/master/run.sh), and append the TensorRT, cudnn library path into the `LD_LIBRARY_PATH`. See run.sh for details
 
 ```
 bash run.sh
