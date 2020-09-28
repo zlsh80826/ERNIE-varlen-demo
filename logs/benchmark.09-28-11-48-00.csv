@@ -1,0 +1,2 @@
+dataset,model,mode,seq_len,batch_size,metric,metric_value,QPS
+QNLI,base-2.0,trt-fp16,dynamic,32,simple_accuracy,0.9264140582097748,4908.96
