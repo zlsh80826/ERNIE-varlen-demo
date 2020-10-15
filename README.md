@@ -121,7 +121,7 @@ The new input is changed.
 1. input embedding idx, shape=[**sum of (S)**], data type = **int32_t**. **sum of (S)** means the total sequence length of the batch
 2. sent type, shape=[**sum of (S)**], data type = **int32_t**
 3. cumulative sequence length, shape = [**B + 1**], data type = **in32_t**, 
-   i.e. four sequences: AAAA, BB, CCC, D. We should feed: [0, 3, 5, 8, 9]
+   i.e. four sequences: AAAA, BB, CCC, D. We should feed: [0, 4, 6, 9, 10]
 4. dummy input, shape = [**max of (S)**], data type = **int32_t**, the shape is the max sequence length of the batch, the value can be any integer
    i.e. four sequences: AAAA, BB, CCC, D. We should feed: [0, 0, 0, 0]
 
