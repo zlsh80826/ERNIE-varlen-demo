@@ -64,6 +64,15 @@ $ ulimit -n 2048
 $ make -j `nproc`
 ```
 
+## Build ERNIE-varlen demo
+```bash
+$ git clone 'https://github.com/zlsh80826/ERNIE-varlen-Demo.git'
+$ cd ernie-varlen
+$ mkdie build && cd build
+$ cmake ../src -DFLUID_INFER_LIB=<path of paddle root>/build-env/paddle_inference_install_dir
+$ make
+```
+
 ## Download the pretrained model and the preprocessed dataset
 * Pretrained model: [Google drive download link](https://drive.google.com/file/d/1eZEsxWQInqHEx8GpLH_gJGPB5bY4r6oe/view?usp=sharing)
 * preprocessed dataset: [Google driver download link](https://drive.google.com/file/d/1iWNrse6N2U3o5nwfQ7IVDIBMit6TYtqf/view?usp=sharing)
@@ -84,15 +93,6 @@ After compressing the downloaded data, the ernie-varlen directory should be like
 ├── scripts
 └── src
 
-```
-
-## Build ERNIE-varlen demo
-```bash
-$ git clone 'https://gitlab-master.nvidia.com/rewang/ernie-varlen.git'
-$ cd ernie-varlen
-$ mkdie build && cd build
-$ cmake ../src -DFLUID_INFER_LIB=<path of paddle root>/build-env/paddle_inference_install_dir
-$ make
 ```
 
 ## Run the benchmark
