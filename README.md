@@ -66,8 +66,8 @@ $ make -j `nproc`
 
 ## Build ERNIE-varlen demo
 ```bash
-$ git clone 'https://github.com/zlsh80826/ERNIE-varlen-Demo.git'
-$ cd ernie-varlen
+$ git clone 'https://github.com/zlsh80826/ERNIE-varlen-demo.git'
+$ cd ERNIE-varlen-demo
 $ mkdie build && cd build
 $ cmake ../src -DFLUID_INFER_LIB=<path of paddle root>/build-env/paddle_inference_install_dir
 $ make
