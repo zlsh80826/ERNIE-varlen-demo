@@ -129,7 +129,7 @@ auto read_inputs(std::string input_file)
         for (size_t j = 0; j < batch_size; ++ j) {
             const size_t idx = i + j;
             const size_t seq_len = std::stoi(buffer[idx * offset], nullptr, 10);
-            batch_len += seq_len;
+            batch_len += (not FLAGS_seq_lens) ? seq_len : FLAGS_seq_lens;
         }
         all_batch_len.emplace_back(batch_len);
 
@@ -138,9 +138,11 @@ auto read_inputs(std::string input_file)
         batch_len = 0;
         for (size_t j = 0; j < batch_size; ++ j) {
             const size_t idx = i + j;
-            const size_t seq_len = std::stoi(buffer[idx * offset], nullptr, 10);
-            read_line(buffer[idx * offset + 1], bs.srcs_ + batch_len, seq_len);
-            read_line(buffer[idx * offset + 2], bs.sents_ + batch_len, seq_len);
+            size_t read_seq_len = std::stoi(buffer[idx * offset], nullptr, 10);
+	    if (FLAGS_seq_lens) read_seq_len = std::min(read_seq_len, FLAGS_seq_lens);
+            read_line(buffer[idx * offset + 1], bs.srcs_ + batch_len, read_seq_len);
+            read_line(buffer[idx * offset + 2], bs.sents_ + batch_len, read_seq_len);
+            const size_t seq_len = (not FLAGS_seq_lens) ? read_seq_len : FLAGS_seq_lens;
             bs.cu_seqlens_[j + 1] = bs.cu_seqlens_[j] + seq_len;
             max_seq_len = std::max(max_seq_len, seq_len);
             batch_len += seq_len;

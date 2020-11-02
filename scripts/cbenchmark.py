@@ -28,16 +28,17 @@ class Benchmarker:
         model_path = os.path.join(BROOT, f'models/{self.dataset}-{self.model}-2.0')
         valid_data = os.path.join(BROOT, get_valid_data(self.dataset, self.model))
         inference_bin = os.path.join(BROOT, 'build/inference')
-        ret = subprocess.run([inference_bin, '--logtostderr',
+        cmd = [inference_bin, '--logtostderr',
                         '--model', model_path,
-                        '--data', valid_data, 
-                        '--mode', mode, 
+                        '--data', valid_data,
+                        '--mode', mode,
                         '--batch_size', str(batch_size),
                         '--num_labels', get_num_labels(self.dataset),
                         '--seq_lens', str(self.seq_len),
                         '--min_graph', str(self.args.min_graph),
                         '--ignore_copy', str(self.args.ignore_copy),
-                        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        ]
+        ret = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if ret.returncode != 0:
             print(ret.stderr.decode('ascii'))
             assert False, 'Prediction failed.'
@@ -74,7 +75,7 @@ def parse_args():
     parser.add_argument('--model', '-m', nargs='+', default=['base'], choices=['base'])
     parser.add_argument('--inference', '-i', nargs='+', default=['fp32'], choices=['fp32', 'trt-fp32', 'trt-fp16'])
     parser.add_argument('--batch_size', '-b', type=int, default=[1], nargs='+')
-    parser.add_argument('--seq_len', type=int, default=[0], choices=[0], help='whether use fix length, default is dynamic')
+    parser.add_argument('--seq_len', type=int, default=[0], nargs='+', help='whether use fix length, default is dynamic')
     parser.add_argument('--stats_csv', type=str, default=os.path.join(BROOT, f'logs/benchmark.{timestamp}.csv'))
     parser.add_argument('--cool_down', '-c', type=int, default=0)
     parser.add_argument('--ignore_copy', type=int, default=1, help='whether to ignore copy cost')
