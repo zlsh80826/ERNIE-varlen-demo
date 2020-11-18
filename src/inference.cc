@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <numeric>
+#include <thread>
 #include <string>
 #include <vector>
 
@@ -186,13 +187,13 @@ paddle::AnalysisConfig* configure(T* analytics) {
             {"eval_placeholder_0", max_shape}, 
             {"eval_placeholder_1", max_shape}, 
             {"eval_placeholder_2", {(int)FLAGS_batch_size + 1}}, 
-            {"eval_placeholder_3", {128}}, 
+            {"eval_placeholder_3", {384}},
     };
     const std::map<std::string, std::vector<int>> opt_input_shape = {
             {"eval_placeholder_0", opt_shape}, 
             {"eval_placeholder_1", opt_shape}, 
             {"eval_placeholder_2", {(int)FLAGS_batch_size + 1}}, 
-            {"eval_placeholder_3", {128}}, 
+            {"eval_placeholder_3", {384}},
     };
 
     if (flags::FLAGS_mode == "trt-fp32") { 
@@ -226,6 +227,7 @@ auto predict(paddle::PaddlePredictor *predictor, T first, T last, bool output, b
     std::vector<int> ans_buffer;
 
     for (auto it = first; it != last; ++ it) {
+	Timer ltimer;
         timer.start();
         const BatchSeq& batch = *it;
         total_seqs += batch.batch_size_;
@@ -234,6 +236,7 @@ auto predict(paddle::PaddlePredictor *predictor, T first, T last, bool output, b
                   << ", batch.batch_len_: " << batch.batch_len_ 
                   << ", batch.max_seq_len_: " << batch.max_seq_len_ << std::endl;
 
+	ltimer.start();
         auto input0 = predictor->GetInputTensor(input_names[0]);
         input0->Reshape({(int)batch.batch_len_});
         input0->copy_from_cpu(batch.srcs_);
@@ -257,7 +260,10 @@ auto predict(paddle::PaddlePredictor *predictor, T first, T last, bool output, b
 
         auto output_tensor = predictor->GetOutputTensor(output_names[0]);
         output_tensor->copy_to_cpu(output_data);
+	ltimer.stop();
         timer.stop();
+
+	std::cerr << "[R]: " << ltimer.report() << std::endl;
 
         if (not output)
             continue;
@@ -293,15 +299,18 @@ int main(int argc, char **argv) {
     auto config = configure(&analytics);
     auto predictor = CreatePaddlePredictor(*config);
 
+    // std::this_thread::sleep_for (std::chrono::seconds(300));
+
     predict(predictor.get(), inputs.cbegin(), inputs.cbegin() + 1, false, true); // warmup
 
     size_t num_seq;
     double total_time, copy_time;
 
     std::tie(num_seq, total_time) = predict(predictor.get(), inputs.begin(), inputs.end(), FLAGS_out_predict, true);
-    std::tie(num_seq, copy_time) = predict(predictor.get(), inputs.begin(), inputs.end(), false, false);
-
-    if (not FLAGS_ignore_copy) total_time -= copy_time;
+    if (FLAGS_ignore_copy) {
+        std::tie(num_seq, copy_time) = predict(predictor.get(), inputs.begin(), inputs.end(), false, false);
+        total_time -= copy_time;
+    }
 
     std::cout << "Sents/s " << num_seq / total_time << std::endl;
     std::cerr << num_seq << ", " << total_time << std::endl;
