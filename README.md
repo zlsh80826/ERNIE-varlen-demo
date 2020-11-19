@@ -52,12 +52,12 @@ $ cmake .. -DWITH_PYTHON=OFF \
            -DWITH_TESTING=OFF \
            -DWITH_INFERENCE_API_TEST=OFF \
            -DCMAKE_BUILD_TYPE=Release \
-           -DCUDA_ARCH_NAME=Turing \
+           -DCUDA_ARCH_NAME=Auto \
            -DON_INFER=ON \
            -DWITH_MKL=OFF \
            -DWITH_AVX=OFF \
            -DWITH_NCCL=OFF \
-           -DTENSORRT_ROOT=<path to TensorRT 7.2.0.14 root> \
+           -DTENSORRT_ROOT=<path to TensorRT 7.2 root> \
            -DCUDNN_ROOT=<path to cudnn 8.0 root> \
            -DWITH_NVINFER_PLUGIN=ON
 $ ulimit -n 2048
