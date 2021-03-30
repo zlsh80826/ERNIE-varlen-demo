@@ -44,8 +44,7 @@ We are still in progress on merging the varlen features into PaddlePaddle develo
 Follow the below instructions to build the paddle inference api.
 
 ``` bash
-$ git clone 'https://github.com/zlsh80826/Paddle.git' && cd Paddle
-$ git checkout nvinfer_plugin_var_len_cuda11
+$ git clone 'https://github.com/PaddlePaddle/Paddle.git' && cd Paddle
 $ mkdir build-env && cd build-env
 $ cmake .. -DWITH_PYTHON=OFF \
            -DWITH_GPU=ON \
