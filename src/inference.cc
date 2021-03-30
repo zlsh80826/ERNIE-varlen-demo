@@ -19,7 +19,7 @@ DEFINE_uint32(batch_size, 1, "batch size");
 DEFINE_uint64(seq_lens, 0, "max seq len");
 DEFINE_int32(num_labels, 2, "number of labels");
 DEFINE_int32(out_predict, 1, "whether to output predition");
-DEFINE_int32(min_graph, 3, "min graph size in trt option");
+DEFINE_int32(min_graph, 5, "min graph size in trt option");
 DEFINE_int32(ignore_copy, 0, "whether to ignore the copy cost");
 
 class Timer {
@@ -178,19 +178,19 @@ paddle::AnalysisConfig* configure(T* analytics) {
             {"eval_placeholder_0", min_shape}, 
             {"eval_placeholder_1", min_shape}, 
             {"eval_placeholder_2", {1}},
-            {"eval_placeholder_3", {1}},
+            {"eval_placeholder_3", {1, 1, 1}},
     };
     const std::map<std::string, std::vector<int>> max_input_shape = {
             {"eval_placeholder_0", max_shape}, 
             {"eval_placeholder_1", max_shape}, 
             {"eval_placeholder_2", {(int)FLAGS_batch_size + 1}}, 
-            {"eval_placeholder_3", {128}}, 
+            {"eval_placeholder_3", {1, 128, 1}},
     };
     const std::map<std::string, std::vector<int>> opt_input_shape = {
             {"eval_placeholder_0", opt_shape}, 
             {"eval_placeholder_1", opt_shape}, 
             {"eval_placeholder_2", {(int)FLAGS_batch_size + 1}}, 
-            {"eval_placeholder_3", {128}}, 
+            {"eval_placeholder_3", {1, 128, 1}},
     };
 
     if (flags::FLAGS_mode == "trt-fp32") { 
@@ -204,6 +204,8 @@ paddle::AnalysisConfig* configure(T* analytics) {
             paddle::AnalysisConfig::Precision::kHalf, false, false);
         config->SetTRTDynamicShapeInfo(min_input_shape, max_input_shape, opt_input_shape);
     }
+
+    config->EnableTensorRtOSS();
 
     return config;
 }
@@ -248,7 +250,7 @@ auto predict(paddle::PaddlePredictor *predictor, T first, T last, bool output, b
         dummy_input.resize(batch.max_seq_len_);
 
         auto input3 = predictor->GetInputTensor(input_names[3]);
-        input3->Reshape({(int)batch.max_seq_len_});
+        input3->Reshape({1, (int)batch.max_seq_len_, 1});
         input3->copy_from_cpu(dummy_input.data());
 
         if (run) predictor->ZeroCopyRun();
