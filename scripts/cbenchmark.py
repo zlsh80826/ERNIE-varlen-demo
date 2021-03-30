@@ -28,7 +28,7 @@ class Benchmarker:
         model_path = os.path.join(BROOT, f'models/{self.dataset}-{self.model}-2.0')
         valid_data = os.path.join(BROOT, get_valid_data(self.dataset, self.model))
         inference_bin = os.path.join(BROOT, 'build/inference')
-        ret = subprocess.run([inference_bin, '--logtostderr',
+        ret = subprocess.run([inference_bin,
                         '--model', model_path,
                         '--data', valid_data, 
                         '--mode', mode, 
