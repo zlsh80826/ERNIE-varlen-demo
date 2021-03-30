@@ -24,7 +24,7 @@ LINK_DIRECTORIES(${CUDA_ROOT}/lib)
 
 ADD_EXECUTABLE(inference inference.cc)
 
-TARGET_LINK_LIBRARIES(inference dl paddle_fluid glog gflags pthread)
+TARGET_LINK_LIBRARIES(inference dl paddle_inference glog gflags pthread)
 
 set_property(TARGET inference PROPERTY CUDA_ARCHITECTURES 75)
 set_property(TARGET inference PROPERTY CXX_STANDARD 17)
