@@ -51,7 +51,7 @@ def read_label(filename):
     # Pandas is not able to read QNLI data
     if 'QNLI' in filename:
         labels = list()
-        with open(filename) as file:
+        with open(filename, encoding='utf-8') as file:
             for line in file:
                 try:
                     _, _, label = line.strip().split('\t')
