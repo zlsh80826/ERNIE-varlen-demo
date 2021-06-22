@@ -154,7 +154,8 @@ auto read_inputs(std::string input_file)
 template <typename T>
 paddle::AnalysisConfig* configure(T* analytics) {
     auto config = new paddle::AnalysisConfig();
-    config->SetModel(flags::FLAGS_model);
+    config->SetModel(flags::FLAGS_model + "/model.pdmodel",
+                     flags::FLAGS_model + "/model.pdiparams");
     config->EnableUseGpu(100, 0);
     config->SwitchSpecifyInputNames(true);
     config->EnableCUDNN();
@@ -162,9 +163,9 @@ paddle::AnalysisConfig* configure(T* analytics) {
     config->EnableMemoryOptim();
     config->SwitchUseFeedFetchOps(false);
 
-    const int min_len = analytics->min();
-    const int max_len = analytics->max();
-    const int opt_len = analytics->mean();
+    const int min_len = 1;
+    const int max_len = FLAGS_batch_size * 128;
+    const int opt_len = FLAGS_batch_size * 128;
 
     std::cerr << "[len settings] min = " << min_len 
               << ", max = " << max_len 
