@@ -73,16 +73,16 @@ class Benchmarker:
 def parse_args():
     timestamp = datetime.datetime.now().strftime("%m-%d-%H-%M-%S")
     parser = argparse.ArgumentParser(description='Benchmarker for PaddlePaddle ERNIE')
-    parser.add_argument('--dataset', '-d', nargs='+', default=['CoLA'],
+    parser.add_argument('--dataset', '-d', nargs='+', default=['QNLI'],
                         choices=['QNLI'])
-    parser.add_argument('--model', '-m', nargs='+', default=['base'], choices=['base', 'large'])
-    parser.add_argument('--inference', '-i', nargs='+', default=['fp32'], choices=['fp32', 'trt-fp32', 'trt-fp16'])
+    parser.add_argument('--model', '-m', nargs='+', default=['large'], choices=['base', 'large'])
+    parser.add_argument('--inference', '-i', nargs='+', default=['trt-fp16'], choices=['trt-fp16'])
     parser.add_argument('--batch_size', '-b', type=int, default=[1], nargs='+')
     parser.add_argument('--seq_len', type=int, default=[0], choices=[0], help='whether use fix length, default is dynamic')
     parser.add_argument('--stats_csv', type=str, default=os.path.join(BROOT, f'logs/benchmark.{timestamp}.csv'))
     parser.add_argument('--cool_down', '-c', type=int, default=0)
-    parser.add_argument('--ignore_copy', type=int, default=1, help='whether to ignore copy cost')
-    parser.add_argument('--min_graph', type=int, default=3, help='min graph size in trt options')
+    parser.add_argument('--ignore_copy', type=int, default=0, help='whether to ignore copy cost')
+    parser.add_argument('--min_graph', type=int, default=5, help='min graph size in trt options')
     parser.add_argument('--sparse', type=bool, default=False, help='whether to enable sparse, enable thise option will load sparse weight')
     args = parser.parse_args()
     return args
