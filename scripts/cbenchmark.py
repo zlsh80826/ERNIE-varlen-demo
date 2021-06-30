@@ -70,7 +70,7 @@ class Benchmarker:
             stat['seq_len'] = self.seq_len
 
         cache_path = os.path.join(model_path, f'bs.{self.batch_size}.engine')
-        if not os.path.isfile(cache):
+        if not os.path.isfile(cache_path):
             default_cache_path = os.path.join(model_path, f'_opt_cache')
             shutil.move(default_cache_path, cache_path)
         return stat
