@@ -8,6 +8,7 @@
 #include <numeric>
 #include <string>
 #include <vector>
+#include <sys/stat.h>
 
 namespace flags {
   DEFINE_string(model, "", "model directory");
@@ -156,6 +157,12 @@ paddle::AnalysisConfig* configure(T* analytics) {
     auto config = new paddle::AnalysisConfig();
     config->SetModel(flags::FLAGS_model + "/model.pdmodel",
                      flags::FLAGS_model + "/model.pdiparams");
+    std::string cache_dir(flags::FLAGS_model + "/bs." +
+        std::to_string(FLAGS_batch_size) + ".engine");
+    struct stat buffer;
+    if (stat(cache_dir.c_str(), &buffer) == 0) {
+      config->SetOptimCacheDir(cache_dir);
+    }
     config->EnableUseGpu(100, 0);
     config->SwitchSpecifyInputNames(true);
     config->EnableCUDNN();

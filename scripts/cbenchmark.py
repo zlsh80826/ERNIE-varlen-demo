@@ -2,6 +2,7 @@ import subprocess
 import itertools
 import argparse
 import datetime
+import shutil
 import time
 import sys
 import os
@@ -67,6 +68,11 @@ class Benchmarker:
             stat['seq_len'] = 'dynamic'
         else:
             stat['seq_len'] = self.seq_len
+
+        cache_path = os.path.join(model_path, f'bs.{self.batch_size}.engine')
+        if not os.path.isfile(cache):
+            default_cache_path = os.path.join(model_path, f'_opt_cache')
+            shutil.move(default_cache_path, cache_path)
         return stat
 
 
