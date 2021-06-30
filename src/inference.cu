@@ -194,16 +194,12 @@ paddle::AnalysisConfig* configure(T* analytics) {
             {"eval_placeholder_3", {1, 128, 1}},
     };
 
-    if (flags::FLAGS_mode == "trt-fp32") { 
-        config->EnableTensorRtEngine(1 << 30, 1, FLAGS_min_graph,
-            paddle::AnalysisConfig::Precision::kFloat32, false, false);
-        config->SetTRTDynamicShapeInfo(min_input_shape, max_input_shape, opt_input_shape);
-    }
-
     if (flags::FLAGS_mode == "trt-fp16") {
         config->EnableTensorRtEngine(1 << 30, 1, FLAGS_min_graph,
-            paddle::AnalysisConfig::Precision::kHalf, false, false);
+            paddle::AnalysisConfig::Precision::kHalf, true, false);
         config->SetTRTDynamicShapeInfo(min_input_shape, max_input_shape, opt_input_shape);
+    } else {
+	assert(false && "ernie-varlen currently support fp16 only.");
     }
 
     config->EnableTensorRtOSS();
@@ -290,19 +286,24 @@ int main(int argc, char **argv) {
 
     assert(not flags::FLAGS_model.empty());
 
-    auto [inputs, analytics] = read_inputs(flags::FLAGS_data);
+    std::vector<BatchSeq> inputs;
+    Analytics<size_t> analytics;
+
+    std::tie(inputs, analytics) = read_inputs(flags::FLAGS_data);
     auto config = configure(&analytics);
     auto predictor = CreatePaddlePredictor(*config);
 
     predict(predictor.get(), inputs.cbegin(), inputs.cbegin() + 1, false, true); // warmup
 
     size_t num_seq;
-    double total_time, copy_time;
+    double total_time = 0., copy_time = 0.;
 
     std::tie(num_seq, total_time) = predict(predictor.get(), inputs.begin(), inputs.end(), FLAGS_out_predict, true);
-    std::tie(num_seq, copy_time) = predict(predictor.get(), inputs.begin(), inputs.end(), false, false);
-
-    if (not FLAGS_ignore_copy) total_time -= copy_time;
+    if (FLAGS_ignore_copy) {
+      // run one more time without forwarding to get the copy time
+      std::tie(num_seq, copy_time) = predict(predictor.get(), inputs.begin(), inputs.end(), false, false);
+      total_time -= copy_time;
+    }
 
     std::cout << "Sents/s " << num_seq / total_time << std::endl;
     std::cerr << num_seq << ", " << total_time << std::endl;
