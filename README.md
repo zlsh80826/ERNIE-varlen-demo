@@ -9,18 +9,19 @@ This repo demos the ability of above powerful features.
 
 ## Quick Start
 
-### Clone the repo
+### Clone the repository
 ``` bash
 $ git clone https://github.com/zlsh80826/ERNIE-varlen-demo.git
 $ git checkout sparsity
 $ cd ernie-varlen-benchmark
 ```
 
-### Download the models and data
+### Download the models, data, TensorRT8
 
-Download the [models](https://drive.google.com/file/d/1RJeWVfbsXRt6a8gMb86zuhCty0GJ5biK/view?usp=sharing) and [data](https://drive.google.com/file/d/1Q_SOngP1qMGt7j5nJvmaRxEQDufrwugm/view?usp=sharing) through the links.
+* Download the [models](https://drive.google.com/file/d/1RJeWVfbsXRt6a8gMb86zuhCty0GJ5biK/view?usp=sharing) and [data](https://drive.google.com/file/d/1Q_SOngP1qMGt7j5nJvmaRxEQDufrwugm/view?usp=sharing) through the links.
+* Download the [TensorRT8 GA](https://developer.nvidia.com/nvidia-tensorrt-8x-download)
 
-After downloading, extract them under this repo directory.
+After downloading, extract `models.tar.xz` and `data.tar.xz` under this repo directory. (No need to extract `TensorRT.*.tar.gz`, we will copy it to the container and extract it inside the container)
 
 ```bash
 tar xf models.tar.xz
@@ -42,9 +43,10 @@ $ tree .
 │   ├── cbenchmark.py
 │   ├── launch.sh
 │   └── utils.py
-└── src
-    ├── CMakeLists.txt
-    └── inference.cu
+├── src
+│   ├── CMakeLists.txt
+│   └── inference.cu
+└── TensorRT-8.0.1.6.Linux.x86_64-gnu.cuda-11.3.cudnn8.2.tar.gz
 ```
 
 ### Build the image
