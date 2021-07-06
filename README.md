@@ -1,137 +1,129 @@
 # PaddlePaddle/ERNIE var-len demo
-TensorRT 7.2 provides several plugins to support var-len BERT, this repo demos the ability and the performance of this feature
 
-## Introduction
-In the past, if we want to inference sequences with different sequence lengths, we have to pad the shorter sequences
+## Features
 
-For example, if we have following four sequences in an inference batch
-```
-1. AAAA
-2. BB
-3. CCC
-4. D
-```
+* TensorRT 7.2 provides new plugins for var-len BERT.
+* TensorRT 8.0 supports [NVIDIA sparse tensor core](https://developer.nvidia.com/blog/exploiting-ampere-structured-sparsity-with-cusparselt).
 
-Then we have to do the padding
-```
-1. AAAA
-2. BBXX
-3. CCCX
-4. DXXX
-```
+This repo demos the ability of above powerful features.
 
-However, this leads to the redundant computation on the padding values.
+## Quick Start
 
-So, TensorRT 7.2 provides several plugins to support the var-len situation. 
-
-Now, we feed the concatenated sequence as input instead of padding the shorter sequences.
-```
-1. AAAABBCCCD
-```
-
-See [Other details of this benchmark](#other-details-of-this-benchmark) for the input description
-
-## Requirements
-* python >= 3.6
-* [cuda](https://developer.nvidia.com/cuda-downloads) >= 11.0
-* [cudnn](https://developer.nvidia.com/cudnn) >= 8.0
-* [TensorRT](https://developer.nvidia.com/tensorrt) >= 7.2.0.14
-
-## Build PaddlePaddle with varlen features
-
-We are still in progress on merging the varlen features into PaddlePaddle develop branch. We show the demo by [this branch](https://github.com/zlsh80826/Paddle/tree/nvinfer_plugin_var_len_cuda11). 
-
-Follow the below instructions to build the paddle inference api.
-
+### Clone the repo
 ``` bash
-$ git clone 'https://github.com/PaddlePaddle/Paddle.git' && cd Paddle
-$ mkdir build-env && cd build-env
-$ cmake .. -DWITH_PYTHON=OFF \
-           -DWITH_GPU=ON \
-           -DWITH_TESTING=OFF \
-           -DWITH_INFERENCE_API_TEST=OFF \
-           -DCMAKE_BUILD_TYPE=Release \
-           -DCUDA_ARCH_NAME=Turing \
-           -DON_INFER=ON \
-           -DWITH_MKL=OFF \
-           -DWITH_AVX=OFF \
-           -DWITH_NCCL=OFF \
-           -DTENSORRT_ROOT=<path to TensorRT 7.2.0.14 root> \
-           -DCUDNN_ROOT=<path to cudnn 8.0 root> \
-           -DWITH_NVINFER_PLUGIN=ON
-$ ulimit -n 2048
-$ make -j `nproc`
+$ git clone https://github.com/zlsh80826/ERNIE-varlen-demo.git
+$ git checkout sparsity
+$ cd ernie-varlen-benchmark
 ```
 
-## Build ERNIE-varlen demo
+### Download the models and data
+
+Download the [models](https://drive.google.com/file/d/1RJeWVfbsXRt6a8gMb86zuhCty0GJ5biK/view?usp=sharing) and [data](https://drive.google.com/file/d/1Q_SOngP1qMGt7j5nJvmaRxEQDufrwugm/view?usp=sharing) through the links.
+
+After downloading, extract them under this repo directory.
+
 ```bash
-$ git clone 'https://github.com/zlsh80826/ERNIE-varlen-demo.git'
-$ cd ERNIE-varlen-demo
-$ mkdir build && cd build
-$ cmake ../src -DFLUID_INFER_LIB=<path of paddle root>/build-env/paddle_inference_install_dir
-$ make
+tar xf models.tar.xz
+tar xf data.tar.xz
 ```
 
-## Download the pretrained model and the preprocessed dataset
-* Pretrained model: [Google drive download link](https://drive.google.com/file/d/1eZEsxWQInqHEx8GpLH_gJGPB5bY4r6oe/view?usp=sharing)
-* preprocessed dataset: [Google driver download link](https://drive.google.com/file/d/1iWNrse6N2U3o5nwfQ7IVDIBMit6TYtqf/view?usp=sharing)
-
-After downloading the above compressed file, uncompress them under the ernie-varlen directory
+Then your directory will be like
 ```bash
-$ tar -xf models.tar.xz
-$ tar -xf data.tar.xz
-```
-After compressing the downloaded data, the ernie-varlen directory should be like
-```bash
+$ tree .
 .
+├── benchmark-mig.sh
+├── benchmark.sh
 ├── data
-│   └── QNLI
-├── logs
+├── Dockerfile
 ├── models
-│   └── QNLI-base-2.0
+├── README.md
 ├── scripts
+│   ├── build.sh
+│   ├── cbenchmark.py
+│   ├── launch.sh
+│   └── utils.py
 └── src
-
+    ├── CMakeLists.txt
+    └── inference.cu
 ```
 
-## Run the benchmark
-
-Edit [run.sh](https://gitlab-master.nvidia.com/rewang/ernie-varlen/-/blob/master/run.sh), and append the TensorRT, cudnn library path into the `LD_LIBRARY_PATH`. See run.sh for details
-
+### Build the image
+The image builds [PaddlePaddle](https://github.com/zlsh80826/Paddle/tree/tensorrt8-sparsity) and [ERNIE-varlen-demo](https://github.com/zlsh80826/ERNIE-varlen-demo/tree/sparsity). The building step may take 30-90 minutes depend on the CPU model. 
+If your system memory is lower than 32GB, please modify the [Dockerfile](Dockerfile) for using less threads to compile Paddle (default use ``nproc``).
+If you are going to benchmark with MIG, please configure the MIG before executing [launch.sh](scripts/launch.sh)
 ```
-bash run.sh
+$ bash scripts/build.sh
+$ bash scripts/launch.sh
+$ # enter the container
 ```
 
-## Other details of this benchmark
+### Benchmark
+After entering the container, you can start the benchmark by
+```bash
+$ bash benchmark.sh
+```
 
-### Benchmark layout
-* `src/inference.cc` is the core of the benchmark, it does following things: read the input/create the predictor/run the benchmark/output the prediction.
-* `script/cbenchmark.py` is an python interface to use the `src/inference.cc`, and `script/cbenchmark.py` also validates the prediction accuracy.
-* `run.sh` is used to set different environment variables and run the benchmark
+### Benchmark with MIG
+If you are going to benchmark with MIG-ALL (run benchmark simultaneously on all mig), please enter the container before enabling and configuring the MIG.
+The MIG-ALL benchmark has two parts. The first part executes the normal benchmark and generate the serialized trt engine file for second part. 
+The second part then read the generated trt engine file to run benchmark on each mig to simulate the performance after enabling the mig.
+```bash
+$ bash benchmark.sh
+$ bash benchmark-mig.sh
+```
 
-### Input changes
-Following is the old input for the PaddlePredictor. (B = batch size, S = max sequence length of the batch)
-1. input embedding idx, shape=[B, S], data type = int64_t
-2. sent type, shape = [B, S], data type = int64_t
-3. position, shape = [B, S], data type = int64_t
-4. mask, shape = [B, S], data type = float32
+## Benchmark Results
 
-The new input is changed.
-1. input embedding idx, shape=[**sum of (S)**], data type = **int32_t**. **sum of (S)** means the total sequence length of the batch
-2. sent type, shape=[**sum of (S)**], data type = **int32_t**
-3. cumulative sequence length, shape = [**B + 1**], data type = **in32_t**, 
-   i.e. four sequences: AAAA, BB, CCC, D. We should feed: [0, 4, 6, 9, 10]
-4. dummy input, shape = [**max of (S)**], data type = **int32_t**, the shape is the max sequence length of the batch, the value can be any integer
-   i.e. four sequences: AAAA, BB, CCC, D. We should feed: [0, 0, 0, 0]
+### Notes
 
-## Performance on T4
-Here are some numbers for the reference
-* Dataset: QNLI (5463 sequences)
-* GPU: NVIDIA T4 (default clock)
-* Batch size: 32
-* Inference mode: FCFS
+1. The following results were obtained on Intel(R) Xeon(R) Silver 4210R CPU with performance mode. The GPU frequency was set on default clock.
+``` bash
+sudo cpupower frequency-set -g performance
+sudo nvidia-smi -rac
+sudo nvidia-smi -rgc
+```
 
-| Implemenation           | Sents/s |
-|-------------------------|---------|
-| Past (w/ padding)       | ~800    |
-| This repo (w/o padding) | ~2100   |
+2. The MIG setting on A100 was to split the GPU to 7 instances. The results on the following tables were obtained on one of the instances.
+``` bash
+sudo nvidia-smi -mig 1
+sudo nvidia-smi mig -cgi 19,19,19,19,19,19,19 -C
+```
+
+3. The MIG setting on A30 was to split the GPU to 4 instances. The results on the following tables were obtained on one of the instances.
+``` bash
+sudo nvidia-smi -mig 1
+sudo nvidia-smi mig -cgi 14,14,14,14 -C
+```
+
+### Sentences/second on dense weight 
+
+| Batch Size  | 1    | 2    | 4    | 8    | 16    | 32    | 64    | 128    | 256    |
+|:------------|:-----|------|------|------|-------|-------|-------|--------|-------:|
+| A10         | 184  | 333  | 522  | 833  | 1014  | 1399  | 1505  | 1618   | 1660   |
+| A30         | 228  | 392  | 675  | 932  | 1735  | 2061  | 2304  | 2454   | 2549   |
+| A30-MIG     | 105  | 139  | 260  | 367  | 496   | 622   | 687   | 733    | 761    |
+| A30-MIG-ALL | 420  | 556  | 1024 | 1415 | 1839  | 2213  | 2394  | 2475   | 2549   |
+| A100        | 297  | 532  | 909  | 1311 | 2621  | 3346  | 3969  | 4245   | 4485   |
+| A100-MIG    | 93   | 136  | 284  | 363  | 491   | 602   | 662   | 701    | 726    |
+
+### Sentences/second on sparse weight 
+
+| Batch Size  | 1    | 2    | 4    | 8    | 16    | 32    | 64    | 128    | 256    |
+|:------------|:-----|------|------|------|-------|-------|-------|--------|-------:|
+| A10         | 243  | 468  | 812  | 1267 | 1703  | 1885  | 2060  | 2136   | 2192   |
+| A30         | 266  | 476  | 883  | 1407 | 2174  | 2740  | 3061  | 3182   | 3379   |
+| A30-MIG     | 134  | 233  | 410  | 578  | 756   | 863   | 932   | 993    | 1026   |
+| A30-MIG-ALL | 533  | 927  | 1621 | 2235 | 2834  | 3136  | 3362  | 3501   | 3603   |
+| A100        | 307  | 595  | 1061 | 1869 | 3161  | 4152  | 5383  | 5786   | 5973   |
+| A100-MIG    | 119  | 215  | 384  | 572  | 745   | 844   | 933   | 987    | 1019   |
+
+### Sparse weight speedup
+
+| Batch Size  | 1    | 2    | 4    | 8    | 16    | 32    | 64    | 128    | 256    |
+|:------------|:-----|------|------|------|-------|-------|-------|--------|-------:|
+| A10         | 1.32 | 1.41 | 1.56 | 1.52 | 1.68  | 1.35  | 1.37  | 1.32   | 1.32   |
+| A30         | 1.17 | 1.21 | 1.54 | 1.51 | 1.25  | 1.33  | 1.33  | 1.30   | 1.33   |
+| A30-MIG     | 1.58 | 1.68 | 1.58 | 1.58 | 1.52  | 1.39  | 1.36  | 1.35   | 1.35   |
+| A30-MIG-ALL | 1.27 | 1.67 | 1.58 | 1.58 | 1.54  | 1.41  | 1.40  | 1.41   | 1.41   |
+| A100        | 1.03 | 1.12 | 1.17 | 1.43 | 1.21  | 1.24  | 1.36  | 1.36   | 1.33   |
+| A100-MIG    | 1.28 | 1.58 | 1.35 | 1.58 | 1.51  | 1.40  | 1.41  | 1.41   | 1.40   |
