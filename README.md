@@ -12,8 +12,8 @@ This repo demos the ability of above powerful features.
 ### Clone the repository
 ``` bash
 $ git clone https://github.com/zlsh80826/ERNIE-varlen-demo.git
-$ git checkout sparsity
 $ cd ernie-varlen-benchmark
+$ git checkout sparsity
 ```
 
 ### Download the models, data, TensorRT8
