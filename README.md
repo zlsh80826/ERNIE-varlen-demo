@@ -66,7 +66,7 @@ $ bash benchmark.sh
 ```
 
 ### Benchmark with MIG
-If you are going to benchmark with MIG-ALL (run benchmark simultaneously on all mig), please enter the container before enabling and configuring the MIG.
+If you are going to benchmark with MIG-ALL (run benchmark simultaneously on all mig), please enable and configure MIG before entering the container.
 The MIG-ALL benchmark has two parts. The first part executes the normal benchmark and generate the serialized trt engine file for second part. 
 The second part then read the generated trt engine file to run benchmark on each mig to simulate the performance after enabling the mig.
 ```bash
