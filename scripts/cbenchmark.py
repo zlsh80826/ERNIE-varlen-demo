@@ -43,9 +43,9 @@ class Benchmarker:
                         '--min_graph', str(self.args.min_graph),
                         '--ignore_copy', str(self.args.ignore_copy),
                         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        # if ret.returncode != 0:
-        #     print(ret.stderr.decode('ascii'))
-        #     assert False, 'Prediction failed.'
+        if ret.returncode != 0:
+            print(ret.stderr.decode('ascii'))
+            assert False, 'Prediction failed.'
         prediction = list()
         for line in ret.stdout.decode('ascii').splitlines():
             if line.startswith('Sents/s'):
@@ -84,7 +84,7 @@ def parse_args():
     parser.add_argument('--model', '-m', nargs='+', default=['large'], choices=['base', 'large'])
     parser.add_argument('--inference', '-i', nargs='+', default=['trt-fp16'], choices=['trt-fp16'])
     parser.add_argument('--batch_size', '-b', type=int, default=[1], nargs='+')
-    parser.add_argument('--seq_len', type=int, default=[0], choices=[0], help='whether use fix length, default is dynamic')
+    parser.add_argument('--seq_len', type=int, nargs='+', default=[0], help='whether use fix length, default is dynamic')
     parser.add_argument('--stats_csv', type=str, default=os.path.join(BROOT, f'logs/benchmark.{timestamp}.csv'))
     parser.add_argument('--cool_down', '-c', type=int, default=0)
     parser.add_argument('--ignore_copy', type=int, default=0, help='whether to ignore copy cost')

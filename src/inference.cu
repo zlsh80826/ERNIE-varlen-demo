@@ -1,4 +1,5 @@
 #include <paddle_inference_api.h>
+#include <cuda_profiler_api.h>
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 #include <algorithm>
@@ -129,7 +130,7 @@ auto read_inputs(std::string input_file)
 
         for (size_t j = 0; j < batch_size; ++ j) {
             const size_t idx = i + j;
-            const size_t seq_len = std::stoi(buffer[idx * offset], nullptr, 10);
+            const size_t seq_len = std::max((int)FLAGS_seq_lens, std::stoi(buffer[idx * offset], nullptr, 10));
             batch_len += seq_len;
         }
         all_batch_len.emplace_back(batch_len);
@@ -142,9 +143,10 @@ auto read_inputs(std::string input_file)
             const size_t seq_len = std::stoi(buffer[idx * offset], nullptr, 10);
             read_line(buffer[idx * offset + 1], bs.srcs_ + batch_len, seq_len);
             read_line(buffer[idx * offset + 2], bs.sents_ + batch_len, seq_len);
-            bs.cu_seqlens_[j + 1] = bs.cu_seqlens_[j] + seq_len;
-            max_seq_len = std::max(max_seq_len, seq_len);
-            batch_len += seq_len;
+	    const size_t pad_seq_len = std::max(FLAGS_seq_lens, seq_len);
+            bs.cu_seqlens_[j + 1] = bs.cu_seqlens_[j] + pad_seq_len;
+            max_seq_len = std::max(max_seq_len, pad_seq_len);
+            batch_len += pad_seq_len;
         }
         bs.max_seq_len_ = max_seq_len;
         inputs.emplace_back(bs);
@@ -171,8 +173,8 @@ paddle::AnalysisConfig* configure(T* analytics) {
     config->SwitchUseFeedFetchOps(false);
 
     const int min_len = 1;
-    const int max_len = FLAGS_batch_size * 128;
-    const int opt_len = FLAGS_batch_size * 128;
+    const int max_len = FLAGS_batch_size * std::max((int)FLAGS_seq_lens, 128);
+    const int opt_len = FLAGS_batch_size * std::max((int)FLAGS_seq_lens, 128);
 
     std::cerr << "[len settings] min = " << min_len 
               << ", max = " << max_len 
@@ -192,13 +194,13 @@ paddle::AnalysisConfig* configure(T* analytics) {
             {"eval_placeholder_0", max_shape}, 
             {"eval_placeholder_1", max_shape}, 
             {"eval_placeholder_2", {(int)FLAGS_batch_size + 1}}, 
-            {"eval_placeholder_3", {1, 128, 1}},
+            {"eval_placeholder_3", {1, std::max((int)FLAGS_seq_lens, 128), 1}},
     };
     const std::map<std::string, std::vector<int>> opt_input_shape = {
             {"eval_placeholder_0", opt_shape}, 
             {"eval_placeholder_1", opt_shape}, 
             {"eval_placeholder_2", {(int)FLAGS_batch_size + 1}}, 
-            {"eval_placeholder_3", {1, 128, 1}},
+            {"eval_placeholder_3", {1, std::max((int)FLAGS_seq_lens, 128), 1}},
     };
 
     if (flags::FLAGS_mode == "trt-fp16") {
@@ -305,7 +307,9 @@ int main(int argc, char **argv) {
     size_t num_seq;
     double total_time = 0., copy_time = 0.;
 
+    cudaProfilerStart();
     std::tie(num_seq, total_time) = predict(predictor.get(), inputs.begin(), inputs.end(), FLAGS_out_predict, true);
+    cudaProfilerStop();
     if (FLAGS_ignore_copy) {
       // run one more time without forwarding to get the copy time
       std::tie(num_seq, copy_time) = predict(predictor.get(), inputs.begin(), inputs.end(), false, false);
